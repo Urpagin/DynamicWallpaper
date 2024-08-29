@@ -56,6 +56,7 @@ async fn main() {
         .route("/get-files", get(get_files))
         .route("/images", get(get_images))
         .route("/images/:filename", get(serve_image))
+        .route("/delete/:filename", axum::routing::delete(delete_image))
         .layer(DefaultBodyLimit::max(MAX_FILE_SIZE_BYTES as usize));
 
     let listener = tokio::net::TcpListener::bind(ADDRESS)
@@ -349,6 +350,7 @@ async fn get_files() -> Json<Value> {
     Json(json!({"data": 42}))
 }
 
+/// Returns a JSON of all of the accessible image paths. (json of such: website.com/images/img_1.png)
 async fn get_images() -> Result<Json<Value>, StatusCode> {
     let mut images = Vec::new();
     let mut entries = tokio::fs::read_dir(IMAGE_DIRECTORY)
@@ -372,6 +374,8 @@ async fn get_images() -> Result<Json<Value>, StatusCode> {
 
     Ok(Json(serde_json::json!(images)))
 }
+
+/// Provides a shortcut from addr/wallpapers/img.jpg to addr/images/img.jpg
 async fn serve_image(
     axum::extract::Path(filename): axum::extract::Path<String>,
 ) -> impl IntoResponse {
@@ -380,6 +384,42 @@ async fn serve_image(
         Ok(contents) => {
             let content_type = mime_guess::from_path(&filename).first_or_octet_stream();
             ([(header::CONTENT_TYPE, content_type.as_ref())], contents).into_response()
+        }
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
+/// Deletes the image on the fs from its path.
+async fn delete_image(
+    axum::extract::Path(filename): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    let file_path = Path::new(IMAGE_DIRECTORY).join(&filename);
+    match fs::remove_file(file_path) {
+        Ok(_) => {
+            let key = format!(
+                "{}/{}",
+                IMAGE_DIRECTORY,
+                &PathBuf::from(&filename)
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+            );
+
+            let key = PathBuf::from(format!(
+                "{IMAGE_DIRECTORY}/{}",
+                filename.split('/').last().unwrap()
+            ));
+
+            // Remove the hash from FILE_HASHES
+            if FILE_HASHES.lock().unwrap().remove(&key).is_some() {
+                debug!("Removed hash with file: {:?}", filename);
+            } else {
+                debug!("Failed to remove hash with file: {:?}", filename);
+            }
+
+            info!("Removed file: {:?}", filename);
+            StatusCode::OK.into_response()
         }
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
