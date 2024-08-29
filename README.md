@@ -15,4 +15,8 @@ The client/sync should be ran at intervals to keep the local images in-sync with
 # Security
 I am but a beginner, I cannot guarantee that there is no exploits.
 
+# Installation
+
+todo!()
+
 This is one of the reason the webui is password-protected.
