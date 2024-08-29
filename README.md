@@ -15,8 +15,9 @@ The client/sync should be ran at intervals to keep the local images in-sync with
 # Security
 I am but a beginner, I cannot guarantee that there is no exploits.
 
+This is one of the reason I should add a password. On that note, adding some king of password-protected proxy should be the lazier but simpler option (like NGINX).
+
 # Installation
 
 todo!()
 
-This is one of the reason the webui is password-protected.
