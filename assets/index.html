@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dynamic Wallpaper Gallery</title>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+	<style>
+		body {
+			font-family: 'Arial', sans-serif;
+			background-color: #f0f2f5;
+			margin: 0;
+			padding: 20px;
+			color: #333;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		h1 {
+			text-align: center;
+			color: #2c3e50;
+			margin-bottom: 30px;
+		}
+
+		#uploadForm {
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			margin-bottom: 30px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		#wallpaper {
+			display: none;
+		}
+
+		.custom-file-upload {
+			border: 2px solid #3498db;
+			display: inline-block;
+			padding: 10px 20px;
+			cursor: pointer;
+			background-color: #3498db;
+			color: white;
+			border-radius: 5px;
+			transition: background-color 0.3s;
+		}
+
+		.custom-file-upload:hover {
+			background-color: #2980b9;
+		}
+
+		button[type="submit"] {
+			background-color: #2ecc71;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			margin-left: 10px;
+			cursor: pointer;
+			border-radius: 5px;
+			transition: background-color 0.3s;
+		}
+
+		button[type="submit"]:hover {
+			background-color: #27ae60;
+		}
+
+		button[type="submit"]:disabled {
+			background-color: #95a5a6;
+			cursor: not-allowed;
+		}
+
+		#imageGallery {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+			gap: 20px;
+		}
+
+		.image-container {
+			position: relative;
+			overflow: hidden;
+			border-radius: 8px;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			transition: transform 0.3s;
+		}
+
+		.image-container:hover {
+			transform: scale(1.05);
+		}
+
+		.image-container img {
+			width: 100%;
+			height: 200px;
+			object-fit: cover;
+			display: block;
+		}
+
+		.delete-btn {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			background-color: rgba(231, 76, 60, 0.8);
+			color: white;
+			border: none;
+			padding: 5px 10px;
+			cursor: pointer;
+			border-radius: 50%;
+			font-size: 16px;
+			transition: background-color 0.3s;
+		}
+
+		.delete-btn:hover {
+			background-color: rgba(192, 57, 43, 0.8);
+		}
+
+		.loading {
+			text-align: center;
+			font-size: 24px;
+			margin-top: 50px;
+		}
+
+		footer {
+			text-align: center;
+			margin-top: 30px;
+			color: #7f8c8d;
+			font-style: italic;
+		}
+
+		footer a {
+			color: #3498db;
+			text-decoration: none;
+			transition: color 0.3s;
+		}
+
+		footer a:hover {
+			color: #2980b9;
+			text-decoration: underline;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<h1>Dynamic Wallpaper Gallery</h1>
+		<form id="uploadForm" enctype="multipart/form-data">
+			<label for="wallpaper" class="custom-file-upload">
+				<i class="fas fa-cloud-upload-alt"></i> Choose File
+			</label>
+			<input type="file" id="wallpaper" name="wallpaper" accept="image/png, image/jpeg, image/webp">
+			<button type="submit" disabled><i class="fas fa-upload"></i> Upload</button>
+		</form>
+		<div id="imageGallery"></div>
+	</div>
+	<footer>
+		<p>Transforming your screen, one wallpaper at a time. Check out the magic behind the scenes on <a
+				href="https://github.com/Urpagin/DynamicWallpaper" target="_blank">GitHub</a> ✨</p>
+	</footer>
+
+	<script>
+		const uploadForm = document.getElementById('uploadForm');
+		const fileInput = document.getElementById('wallpaper');
+		const uploadButton = document.querySelector('button[type="submit"]');
+		const fileLabel = document.querySelector('.custom-file-upload');
+
+		fileInput.addEventListener('change', function (e) {
+			if (this.files.length > 0) {
+				const fileName = this.files[0].name;
+				fileLabel.innerHTML = '<i class="fas fa-file-image"></i> ' + fileName;
+				uploadButton.disabled = false;
+			} else {
+				resetFileInputLabel();
+				uploadButton.disabled = true;
+			}
+		});
+
+		uploadForm.addEventListener('submit', function (e) {
+			e.preventDefault();
+			if (!fileInput.files.length) {
+				return;
+			}
+
+			var formData = new FormData(this);
+			uploadButton.disabled = true;
+			uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+			fetch('/upload', {method: 'POST', body: formData})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Upload failed');
+					}
+					return response.json();
+				})
+				.then(() => {
+					loadImages();
+					fileInput.value = '';
+					resetFileInputLabel();
+				})
+				.catch(error => console.error('Error:', error))
+				.finally(() => {
+					uploadButton.disabled = true;
+					uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+					resetFileInputLabel();
+				});
+		});
+
+		function loadImages() {
+			const gallery = document.getElementById('imageGallery');
+			gallery.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+			fetch('/images')
+				.then(response => response.json())
+				.then(images => {
+					gallery.innerHTML = '';
+					images.forEach(image => {
+						const container = document.createElement('div');
+						container.className = 'image-container';
+
+						const img = document.createElement('img');
+						img.src = `/${image}?t=${new Date().getTime()}`; // Add timestamp to prevent caching
+						img.alt = image;
+
+						const deleteBtn = document.createElement('button');
+						deleteBtn.className = 'delete-btn';
+						deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+						deleteBtn.onclick = (e) => {
+							e.stopPropagation();
+							deleteImage(image);
+						};
+
+						container.appendChild(img);
+						container.appendChild(deleteBtn);
+						gallery.appendChild(container);
+					});
+				})
+				.catch(error => {
+					console.error('Error loading images:', error);
+					gallery.innerHTML = '<p>Error loading images. Please try again later.</p>';
+				});
+		}
+
+		function deleteImage(filename) {
+			let imageName = filename.split('/').pop();
+			if (confirm('Are you sure you want to delete this image?')) {
+				fetch(`/delete/${imageName}`, {method: 'DELETE'})
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Delete failed');
+						}
+						return response.json();
+					})
+					.then(() => loadImages())
+					.catch(error => console.error('Error:', error));
+			}
+		}
+
+		function resetFileInputLabel() {
+			fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose File';
+		}
+
+		window.addEventListener('load', loadImages);
+	</script>
+</body>
+
+</html>
