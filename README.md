@@ -7,6 +7,14 @@ The server/webui part acts as the interface for any user to add/delete images.
 
 The client/sync should be ran at intervals to keep the local images in-sync with the server, then use any wallpaper program (like feh) to put your wallpaper from the local collection.
 
+## Simply Put
+
+- You upload images on the webui (you can delete them too).
+
+- You run the client part and images from the webui server will be synced to your local directory.
+
+- Then you use your favorite wallpaper program to choose at random in your local synced image directory.
+
 # Why?
 
 - Learning opportunity.

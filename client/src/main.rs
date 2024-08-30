@@ -13,7 +13,8 @@ struct Args {
     #[arg(short, long)]
     endpoint: String,
 
-    /// Directory where the images will be synced.
+    /// Directory where the images will be synced. (do not choose a directory where there
+    /// already are files, THEY WILL BE REMOVED)
     #[arg(short, long)]
     directory: String,
 }
@@ -124,7 +125,7 @@ where
         })
         .collect();
 
-    // Add
+    // Add images
     let mut images_filenames: HashSet<String> = HashSet::new();
     for img in images {
         images_filenames.insert(img.filename.clone());
@@ -134,7 +135,7 @@ where
         }
     }
 
-    // Delete
+    // Remove images
     for local_filename in local_filenames {
         if !images_filenames.contains(&local_filename) {
             let path = Path::new(directory.as_ref()).join(local_filename);
