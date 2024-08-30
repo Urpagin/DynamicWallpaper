@@ -1,3 +1,4 @@
+use axum::http::HeaderMap;
 use convert_case::{Case, Casing};
 use core::panic;
 use log::{debug, error, info, warn};
@@ -28,8 +29,6 @@ use thiserror::Error;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
-use tower_http::services::ServeFile;
-
 /// This hashmap holds hashes for the files, so that twice the same file cannot be saved.
 static FILE_HASHES: Lazy<Mutex<HashMap<PathBuf, String>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
@@ -51,9 +50,8 @@ async fn main() {
     });
 
     let app = Router::new()
-        .route_service("/", ServeFile::new("assets/index.html"))
+        .route("/", get(serve_file))
         .route("/upload", post(upload_file))
-        .route("/get-files", get(get_files))
         .route("/images", get(get_images))
         .route("/images/:filename", get(serve_image))
         .route("/delete/:filename", axum::routing::delete(delete_image))
@@ -72,6 +70,17 @@ async fn main() {
         error!("Server error: {e}");
         panic!("Server crashed: {e}");
     });
+}
+
+async fn serve_file() -> impl IntoResponse {
+    match tokio::fs::read_to_string("assets/index.html").await {
+        Ok(content) => {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::CONTENT_TYPE, "text/html".parse().unwrap());
+            (StatusCode::OK, headers, content).into_response()
+        }
+        Err(_) => (StatusCode::NOT_FOUND, "File not found".to_string()).into_response(),
+    }
 }
 
 fn setup_logging(level: log::LevelFilter) {
@@ -322,7 +331,7 @@ async fn upload_file(mut multipart: Multipart) -> Result<impl IntoResponse, AppE
         }
     }
 
-    Ok((StatusCode::OK, "File uploaded successfully"))
+    Ok(Json(json!({"message": "File uploaded successfully"})))
 }
 
 /// Uploads and then saves the file onto the machine's fs.
@@ -345,11 +354,6 @@ async fn upload_and_save(
     Ok(())
 }
 
-async fn get_files() -> Json<Value> {
-    println!("Hello, a client is on /get-files!");
-    Json(json!({"data": 42}))
-}
-
 /// Returns a JSON of all of the accessible image paths. (json of such: website.com/images/img_1.png)
 async fn get_images() -> Result<Json<Value>, StatusCode> {
     let mut images = Vec::new();
@@ -365,14 +369,13 @@ async fn get_images() -> Result<Json<Value>, StatusCode> {
         if let Ok(file_type) = entry.file_type().await {
             if file_type.is_file() {
                 if let Some(file_name) = entry.file_name().to_str() {
-                    let total_path = format!("images/{file_name}");
-                    images.push(total_path);
+                    images.push(file_name.to_string());
                 }
             }
         }
     }
 
-    Ok(Json(serde_json::json!(images)))
+    Ok(Json(json!({"images": images})))
 }
 
 /// Provides a shortcut from addr/wallpapers/img.jpg to addr/images/img.jpg
@@ -385,7 +388,7 @@ async fn serve_image(
             let content_type = mime_guess::from_path(&filename).first_or_octet_stream();
             ([(header::CONTENT_TYPE, content_type.as_ref())], contents).into_response()
         }
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(_) => Json(json!({"error": "Image not found"})).into_response(),
     }
 }
 
@@ -396,16 +399,6 @@ async fn delete_image(
     let file_path = Path::new(IMAGE_DIRECTORY).join(&filename);
     match fs::remove_file(file_path) {
         Ok(_) => {
-            let key = format!(
-                "{}/{}",
-                IMAGE_DIRECTORY,
-                &PathBuf::from(&filename)
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-            );
-
             let key = PathBuf::from(format!(
                 "{IMAGE_DIRECTORY}/{}",
                 filename.split('/').last().unwrap()
@@ -419,8 +412,8 @@ async fn delete_image(
             }
 
             info!("Removed file: {:?}", filename);
-            StatusCode::OK.into_response()
+            Json(json!({"message": "Image deleted successfully"})).into_response()
         }
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(_) => Json(json!({"error": "Image not found"})).into_response(),
     }
 }
