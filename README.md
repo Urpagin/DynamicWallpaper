@@ -18,12 +18,12 @@ The client/sync should be ran at intervals to keep the local images in-sync with
 # Why?
 
 - Learning opportunity.
-- Allows multiple computers/friends to have the same collection of wallpapers.
+- Allows multiple computers/friends to share the same collection of wallpapers.
 
 # Security
 I am but a beginner, I cannot guarantee that there is no exploits.
 
-This is one of the reason I should add a password. On that note, adding some king of password-protected proxy should be the lazier but simpler option (like NGINX).
+This is one of the reason I should add a password. On that note, adding some kind of password-protected proxy should be the lazier but simpler option (like NGINX).
 
 # Installation
 
