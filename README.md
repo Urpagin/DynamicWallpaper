@@ -27,5 +27,20 @@ This is one of the reason I should add a password. On that note, adding some kin
 
 # Installation
 
-todo!()
+## Server
+
+1. For the NGINX password-protected proxy be sure to generate the `htpasswd` file with:
+
+    `htpasswd -c htpasswd <username>`
+
+3. Start up the NGINX proxy main program:
+
+    `sudo docker compose up --build -d`
+> [!TIP]  
+> The `--build` argument rebuilds the container so that code updates will be reflected onto the container.
+
+4. Visit `127.0.0.1:<port>` (the default port is 8080 inside `docker-compose.yml`) to access the app.
+
+> [!NOTE]  
+> Once you've started the app via Docker compose, the `wallpapers_server` directory will contain the wallpapers.
 
