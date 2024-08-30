@@ -73,7 +73,7 @@ async fn main() {
 }
 
 async fn serve_file() -> impl IntoResponse {
-    match tokio::fs::read_to_string("assets/index.html").await {
+    match tokio::fs::read_to_string("./assets/index.html").await {
         Ok(content) => {
             let mut headers = HeaderMap::new();
             headers.insert(header::CONTENT_TYPE, "text/html".parse().unwrap());

@@ -4,16 +4,19 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Dynamic Wallpaper Gallery</title>
-	<link rel="icon" type="image/x-icon" href="star_planet_icon.ico">
+	<title>🎨 Wacky Wallpaper Wonderland 🌈</title>
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+
 		body {
-			font-family: 'Arial', sans-serif;
+			font-family: 'Comic Neue', cursive;
 			background-color: #f0f2f5;
 			margin: 0;
 			padding: 20px;
 			color: #333;
+			transition: background-color 0.5s;
 		}
 
 		.container {
@@ -25,6 +28,43 @@
 			text-align: center;
 			color: #2c3e50;
 			margin-bottom: 30px;
+			font-size: 3em;
+			text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+			animation: rainbow 5s linear infinite;
+		}
+
+		@keyframes rainbow {
+			0% {
+				color: red;
+			}
+
+			14% {
+				color: orange;
+			}
+
+			28% {
+				color: yellow;
+			}
+
+			42% {
+				color: green;
+			}
+
+			57% {
+				color: blue;
+			}
+
+			71% {
+				color: indigo;
+			}
+
+			85% {
+				color: violet;
+			}
+
+			100% {
+				color: red;
+			}
 		}
 
 		#uploadForm {
@@ -36,6 +76,11 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
+			transition: transform 0.3s;
+		}
+
+		#uploadForm:hover {
+			transform: scale(1.05);
 		}
 
 		#wallpaper {
@@ -50,11 +95,12 @@
 			background-color: #3498db;
 			color: white;
 			border-radius: 5px;
-			transition: background-color 0.3s;
+			transition: all 0.3s;
 		}
 
 		.custom-file-upload:hover {
 			background-color: #2980b9;
+			transform: rotate(5deg);
 		}
 
 		button[type="submit"] {
@@ -65,11 +111,12 @@
 			margin-left: 10px;
 			cursor: pointer;
 			border-radius: 5px;
-			transition: background-color 0.3s;
+			transition: all 0.3s;
 		}
 
 		button[type="submit"]:hover {
 			background-color: #27ae60;
+			transform: rotate(-5deg);
 		}
 
 		button[type="submit"]:disabled {
@@ -88,11 +135,12 @@
 			overflow: hidden;
 			border-radius: 8px;
 			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-			transition: transform 0.3s;
+			transition: all 0.3s;
 		}
 
 		.image-container:hover {
-			transform: scale(1.05);
+			transform: scale(1.05) rotate(3deg);
+			box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
 		}
 
 		.image-container img {
@@ -100,6 +148,11 @@
 			height: 200px;
 			object-fit: cover;
 			display: block;
+			transition: filter 0.3s;
+		}
+
+		.image-container:hover img {
+			filter: brightness(1.2);
 		}
 
 		.delete-btn {
@@ -113,11 +166,12 @@
 			cursor: pointer;
 			border-radius: 50%;
 			font-size: 16px;
-			transition: background-color 0.3s;
+			transition: all 0.3s;
 		}
 
 		.delete-btn:hover {
 			background-color: rgba(192, 57, 43, 0.8);
+			transform: rotate(90deg);
 		}
 
 		.loading {
@@ -136,38 +190,95 @@
 		footer a {
 			color: #3498db;
 			text-decoration: none;
-			transition: color 0.3s;
+			transition: all 0.3s;
 		}
 
 		footer a:hover {
 			color: #2980b9;
 			text-decoration: underline;
+			font-size: 1.1em;
+		}
+
+		#partyMode {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			background-color: #9b59b6;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			cursor: pointer;
+			border-radius: 5px;
+			transition: all 0.3s;
+		}
+
+		#partyMode:hover {
+			background-color: #8e44ad;
+			transform: scale(1.1);
+		}
+
+		.party-time {
+			animation: disco 1s infinite;
+		}
+
+		@keyframes disco {
+			0% {
+				background-color: red;
+			}
+
+			33% {
+				background-color: green;
+			}
+
+			66% {
+				background-color: blue;
+			}
+
+			100% {
+				background-color: red;
+			}
+		}
+
+		#confetti {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: 9999;
 		}
 	</style>
 </head>
 
 <body>
 	<div class="container">
-		<h1>Dynamic Wallpaper Gallery</h1>
+		<h1>🎨 Wacky Wallpaper Wonderland 🌈</h1>
 		<form id="uploadForm" enctype="multipart/form-data">
 			<label for="wallpaper" class="custom-file-upload">
-				<i class="fas fa-cloud-upload-alt"></i> Choose File
+				<i class="fas fa-cloud-upload-alt"></i> Choose a Funky File
 			</label>
 			<input type="file" id="wallpaper" name="wallpaper" accept="image/png, image/jpeg, image/webp">
-			<button type="submit" disabled><i class="fas fa-upload"></i> Upload</button>
+			<button type="submit" disabled><i class="fas fa-upload"></i> Upload the Magic</button>
 		</form>
 		<div id="imageGallery"></div>
 	</div>
 	<footer>
-		<p>Transforming your screen, one wallpaper at a time. Check out the magic behind the scenes on <a
-				href="https://github.com/Urpagin/DynamicWallpaper" target="_blank">GitHub</a> ✨</p>
+		<p>Transforming your screen, one wild wallpaper at a time. Unleash the chaos on <a
+				href="https://github.com/Urpagin/DynamicWallpaper" target="_blank">GitHub</a> 🎉✨</p>
 	</footer>
 
+	<button id="partyMode"><i class="fas fa-music"></i> Party Mode</button>
+	<canvas id="confetti"></canvas>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.5.1/confetti.browser.min.js"></script>
 	<script>
 		const uploadForm = document.getElementById('uploadForm');
 		const fileInput = document.getElementById('wallpaper');
 		const uploadButton = document.querySelector('button[type="submit"]');
 		const fileLabel = document.querySelector('.custom-file-upload');
+		const partyModeButton = document.getElementById('partyMode');
+		let isPartyMode = false;
 
 		fileInput.addEventListener('change', function (e) {
 			if (this.files.length > 0) {
@@ -201,18 +312,19 @@
 					loadImages();
 					fileInput.value = '';
 					resetFileInputLabel();
+					celebrateUpload();
 				})
 				.catch(error => console.error('Error:', error))
 				.finally(() => {
 					uploadButton.disabled = true;
-					uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload';
+					uploadButton.innerHTML = '<i class="fas fa-upload"></i> Upload the Magic';
 					resetFileInputLabel();
 				});
 		});
 
 		function loadImages() {
 			const gallery = document.getElementById('imageGallery');
-			gallery.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+			gallery.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Summoning Wallpapers...</div>';
 
 			fetch('/images')
 				.then(response => response.json())
@@ -224,7 +336,7 @@
 						container.className = 'image-container';
 
 						const img = document.createElement('img');
-						img.src = `/${image}?t=${new Date().getTime()}`; // Add timestamp to prevent caching
+						img.src = `/${image}?t=${new Date().getTime()}`;
 						img.alt = image;
 
 						const deleteBtn = document.createElement('button');
@@ -242,13 +354,13 @@
 				})
 				.catch(error => {
 					console.error('Error loading images:', error);
-					gallery.innerHTML = '<p>Error loading images. Please try again later.</p>';
+					gallery.innerHTML = '<p>Oops! The wallpapers are playing hide and seek. Try again later!</p>';
 				});
 		}
 
 		function deleteImage(filename) {
 			let imageName = filename.split('/').pop();
-			if (confirm('Are you sure you want to delete this image?')) {
+			if (confirm('Are you absolutely, positively sure you want to banish this wallpaper to the shadow realm?')) {
 				fetch(`/delete/${imageName}`, {method: 'DELETE'})
 					.then(response => {
 						if (!response.ok) {
@@ -256,16 +368,79 @@
 						}
 						return response.json();
 					})
-					.then(() => loadImages())
+					.then(() => {
+						loadImages();
+						playDeleteSound();
+					})
 					.catch(error => console.error('Error:', error));
 			}
 		}
 
 		function resetFileInputLabel() {
-			fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose File';
+			fileLabel.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose a Funky File';
+		}
+
+		function celebrateUpload() {
+			confetti({
+				particleCount: 100,
+				spread: 70,
+				origin: {y: 0.6}
+			});
+		}
+
+		function playDeleteSound() {
+			const audio = new Audio('https://www.myinstants.com/media/sounds/paper-rip-6993.mp3');
+			audio.play();
+		}
+
+		partyModeButton.addEventListener('click', () => {
+			isPartyMode = !isPartyMode;
+			document.body.classList.toggle('party-time', isPartyMode);
+			if (isPartyMode) {
+				startConfettiLoop();
+			} else {
+				stopConfettiLoop();
+			}
+		});
+
+		let confettiInterval;
+
+		function startConfettiLoop() {
+			confettiInterval = setInterval(() => {
+				confetti({
+					particleCount: 50,
+					spread: 70,
+					origin: {y: Math.random() - 0.2}
+				});
+			}, 200);
+		}
+
+		function stopConfettiLoop() {
+			clearInterval(confettiInterval);
 		}
 
 		window.addEventListener('load', loadImages);
+
+		// Easter egg: Konami Code
+		let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+		let konamiIndex = 0;
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === konamiCode[konamiIndex]) {
+				konamiIndex++;
+				if (konamiIndex === konamiCode.length) {
+					activateKonamiCode();
+					konamiIndex = 0;
+				}
+			} else {
+				konamiIndex = 0;
+			}
+		});
+
+		function activateKonamiCode() {
+			document.body.style.fontFamily = '"Comic Sans MS", cursive';
+			alert('🎉 You found the secret code! Enjoy your Comic Sans adventure! 🎉');
+		}
 	</script>
 </body>
 
