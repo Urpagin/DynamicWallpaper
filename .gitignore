@@ -123,5 +123,7 @@ tests/rustdoc-gui/src/**.lock
 *.webm
 *.gif
 *.webp
+wallpaper*/
 wallpapers/
+wallpapers_client/
 
