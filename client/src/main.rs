@@ -1,16 +1,10 @@
 use clap::Parser;
-use core::panic;
 use serde_json::Value;
-use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
-use std::{
-    collections::{self, HashMap},
-    env,
-};
+use std::{collections::HashSet, io::Cursor};
 
-use log::{self, debug, error, info, warn};
-use reqwest;
+use log::{self, debug, error, info};
 
 #[derive(Parser, Debug)]
 #[command(author = "Urpagin")]
@@ -18,6 +12,10 @@ struct Args {
     /// DynamicWallpaper endpoint. e.g. https://wallpaper.yourdomain.ext
     #[arg(short, long)]
     endpoint: String,
+
+    /// Directory where the images will be synced.
+    #[arg(short, long)]
+    directory: String,
 }
 
 #[tokio::main]
@@ -25,18 +23,21 @@ async fn main() {
     init_logging();
     debug!("Program started!");
 
-    let endpoint = read_endpoint();
-    let image_endpoint = format!("{endpoint}/images");
+    let endpoint: String = read_endpoint();
+    let image_directory: String = read_image_directory();
+    let image_endpoint: String = format!("{endpoint}/images");
 
     match fetch_image_links(&image_endpoint).await {
         Ok(images) => {
-            for img in images {
+            for img in &images {
                 info!("{:?}", img);
+            }
+            if let Err(e) = sync_local(image_directory, images).await {
+                error!("Failed to sync local with remote: {e}");
             }
         }
         Err(e) => {
-            error!("Aborting... Failed to fetch images: {e}");
-            std::process::exit(-1);
+            error!("Failed to fetch images: {e}");
         }
     }
 }
@@ -48,10 +49,19 @@ fn read_endpoint() -> String {
         result.pop();
     }
 
-    if !result.starts_with("http://") || !result.starts_with("https://") {
+    if !result.starts_with("http://") && !result.starts_with("https://") {
         error!("Try adding 'http://' or 'https://' before '{result}'");
     }
 
+    result
+}
+
+/// Reads from args the image directory and returns it.
+fn read_image_directory() -> String {
+    let mut result = Args::parse().directory.trim().to_string();
+    if result.ends_with('/') {
+        result.pop();
+    }
     result
 }
 
@@ -96,14 +106,13 @@ struct Image {
 }
 
 /// Synchronizes the remote images with the local directory.
-fn sync_local(directory: &Path, images: Vec<Image>) -> std::io::Result<()> {
-    if !directory.is_dir() {
-        fs::create_dir(directory)?;
-    }
+async fn sync_local<P>(directory: P, images: Vec<Image>) -> Result<(), Box<dyn std::error::Error>>
+where
+    P: AsRef<Path> + std::fmt::Debug,
+{
+    ensure_directory_exists(&directory)?;
 
-    let mut local: HashSet<String> = HashSet::new();
-
-    let a: HashSet<String> = fs::read_dir(directory)?
+    let local_filenames: HashSet<String> = fs::read_dir(&directory)?
         .map(|entry| {
             entry
                 .unwrap()
@@ -111,8 +120,56 @@ fn sync_local(directory: &Path, images: Vec<Image>) -> std::io::Result<()> {
                 .to_str()
                 .ok_or("Failed to convert filename to string")
                 .unwrap()
+                .to_string()
         })
         .collect();
 
+    // Add
+    let mut images_filenames: HashSet<String> = HashSet::new();
+    for img in images {
+        images_filenames.insert(img.filename.clone());
+        if !local_filenames.contains(&img.filename) {
+            let path = Path::new(directory.as_ref()).join(img.filename);
+            download_file(path, &img.download_link).await?;
+        }
+    }
+
+    // Delete
+    for local_filename in local_filenames {
+        if !images_filenames.contains(&local_filename) {
+            let path = Path::new(directory.as_ref()).join(local_filename);
+            remove_file(path)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn ensure_directory_exists<P: AsRef<Path>>(directory: P) -> std::io::Result<()> {
+    let path = directory.as_ref();
+    if !path.is_dir() {
+        fs::create_dir_all(path)?;
+        info!("Created directory: {:?}", path);
+    }
+    Ok(())
+}
+
+/// Downloads a file from a URL and saves it at `path` which also contains the file name
+async fn download_file<P>(path: P, url: &str) -> Result<(), Box<dyn std::error::Error>>
+where
+    P: AsRef<Path> + std::fmt::Debug,
+{
+    let response = reqwest::get(url).await?;
+    let mut file = std::fs::File::create(&path)?;
+    let mut content = Cursor::new(response.bytes().await?);
+    std::io::copy(&mut content, &mut file)?;
+    info!("Downloaded file: {:?}", path);
+    Ok(())
+}
+
+/// Removes a file from the fs using its path.
+fn remove_file<P: AsRef<Path> + std::fmt::Debug>(path: P) -> std::io::Result<()> {
+    fs::remove_file(&path)?;
+    info!("Removed file: {:?}", path);
     Ok(())
 }
