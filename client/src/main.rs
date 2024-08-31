@@ -1,10 +1,11 @@
 use clap::Parser;
+use reqwest::Client;
 use serde_json::Value;
 use std::fs;
 use std::path::Path;
 use std::{collections::HashSet, io::Cursor};
 
-use log::{self, debug, error, info};
+use log::{self, debug, error, info, warn};
 
 #[derive(Parser, Debug)]
 #[command(author = "Urpagin")]
@@ -17,6 +18,14 @@ struct Args {
     /// already are files, THEY WILL BE REMOVED)
     #[arg(short, long)]
     directory: String,
+
+    /// If you used the default NGINX proxy config specify user and password.
+    #[arg(short, long)]
+    user: Option<String>,
+
+    /// If you used the default NGINX proxy config specify user and password.
+    #[arg(short, long)]
+    password: Option<String>,
 }
 
 #[tokio::main]
@@ -24,11 +33,14 @@ async fn main() {
     init_logging();
     debug!("Program started!");
 
-    let endpoint: String = read_endpoint();
-    let image_directory: String = read_image_directory();
+    let args = Args::parse();
+    let endpoint: String = read_endpoint(&args);
+    let image_directory: String = read_image_directory(&args);
+    let auth: Option<Authentication> = read_auth(&args);
+
     let image_endpoint: String = format!("{endpoint}/images");
 
-    match fetch_image_links(&image_endpoint).await {
+    match fetch_image_links(&image_endpoint, auth).await {
         Ok(images) => {
             for img in &images {
                 info!("{:?}", img);
@@ -39,13 +51,16 @@ async fn main() {
         }
         Err(e) => {
             error!("Failed to fetch images: {e}");
+            warn!(
+                "You might consider using arguments --user and --password for NGINX's basic auth"
+            );
         }
     }
 }
 
 /// Reads from args the endpoint and returns it.
-fn read_endpoint() -> String {
-    let mut result = Args::parse().endpoint.trim().to_string();
+fn read_endpoint(args: &Args) -> String {
+    let mut result = args.endpoint.trim().to_string();
     if result.ends_with('/') {
         result.pop();
     }
@@ -58,12 +73,24 @@ fn read_endpoint() -> String {
 }
 
 /// Reads from args the image directory and returns it.
-fn read_image_directory() -> String {
-    let mut result = Args::parse().directory.trim().to_string();
+fn read_image_directory(args: &Args) -> String {
+    let mut result = args.directory.trim().to_string();
     if result.ends_with('/') {
         result.pop();
     }
     result
+}
+
+/// Reads from args to get user, password for auth.
+fn read_auth(args: &Args) -> Option<Authentication> {
+    if let (Some(user), Some(password)) = (args.user.as_ref(), args.password.as_ref()) {
+        Some(Authentication {
+            user: user.to_string(),
+            password: password.to_string(),
+        })
+    } else {
+        None
+    }
 }
 
 /// Initializes the logging
@@ -75,10 +102,33 @@ fn init_logging() {
     builder.init();
 }
 
+/// If the server side is password-protected by the provided NGINX proxy config file,
+/// any request to the server asks for a user and a password.
+struct Authentication {
+    user: String,
+    password: String,
+}
+
 /// Returns a vec of `Image`s that it fetches from the image endpoint.
-async fn fetch_image_links(image_endpoint: &str) -> Result<Vec<Image>, Box<dyn std::error::Error>> {
+async fn fetch_image_links(
+    image_endpoint: &str,
+    auth: Option<Authentication>,
+) -> Result<Vec<Image>, Box<dyn std::error::Error>> {
     debug!("Fetching images with endpoint: '{image_endpoint}'");
-    let json: Value = reqwest::get(image_endpoint).await?.json().await?;
+
+    // Handle auth (NGINX proxy) or no auth (no NGINX proxy).
+    let response: reqwest::Response;
+    if let Some(auth) = auth {
+        response = Client::new()
+            .get(image_endpoint)
+            .basic_auth(auth.user, Some(auth.password))
+            .send()
+            .await?;
+    } else {
+        response = reqwest::get(image_endpoint).await?;
+    }
+
+    let json: Value = response.json().await?;
     let images_filenames: &Vec<Value> = json["images"].as_array().ok_or("JSON is not an array")?; // A list of filenames (file1.png, file2.jpg)
 
     let mut result: Vec<Image> = Vec::new();
