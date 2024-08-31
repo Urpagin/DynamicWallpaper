@@ -244,7 +244,7 @@ fn generate_filename(filename_input: &str) -> Result<String, AppError> {
         .ok_or(AppError::NotAnImage)?
         .to_lowercase();
 
-    info!("extension={extension}");
+    debug!("extension={extension}");
 
     let file_stem = Path::new(&filename)
         .file_stem()
@@ -257,8 +257,10 @@ fn generate_filename(filename_input: &str) -> Result<String, AppError> {
     let filename = format!("{}-{}.{}", file_stem, random_uuid, extension);
 
     if filename.len() as u64 > MAX_FILE_NAME_LENGTH {
+        warn!("File name too long, not processing.");
         Err(AppError::FilenameTooLong)
     } else {
+        debug!("Generated filename: '{filename}'");
         Ok(filename)
     }
 }
