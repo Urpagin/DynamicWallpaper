@@ -1,9 +1,8 @@
 services:
   app:
     build: .
+    restart: unless-stopped
     container_name: wallpaper_server
-    ports:
-      - "4000:4000"  # Map container port 4000 to host port 4000
     volumes:
       - ./wallpapers_server:/usr/src/app/server/wallpapers
     networks:
@@ -11,9 +10,10 @@ services:
 
   nginx:
     image: nginx:latest
+    restart: unless-stopped
     container_name: nginx_proxy
     ports:
-      - "8080:80"  # Expose Nginx on port 8080
+      - "8080:80"  # Change port 8080 to whatever you'd like
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./htpasswd:/etc/nginx/htpasswd:ro
