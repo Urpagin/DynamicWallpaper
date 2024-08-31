@@ -36,7 +36,7 @@ This is one of the reason I should add a password. On that note, adding some kin
 ### Steps
 
 1. Clone the repo
-    `git clone `git clone https://github.com/Urpagin/DynamicWallpaper.git`
+    git clone `git clone https://github.com/Urpagin/DynamicWallpaper.git`
 
 2. Create file `.env` at the same level as `docker-compose.yml` and add those varaibles:
 ```env
