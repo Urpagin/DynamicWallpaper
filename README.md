@@ -34,6 +34,8 @@ This is one of the reason I should add a password. On that note, adding some kin
 - htpasswd: `sudo apt-get install apache2-utils`
 - Docker & Docker compose (see the Docker website for installation)
 
+### Steps
+
 Clone the repo to begin with: `git clone https://github.com/Urpagin/DynamicWallpaper.git`
 
 1. For the NGINX password-protected proxy be sure to generate the `htpasswd` file with:
