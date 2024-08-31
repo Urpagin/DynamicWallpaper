@@ -13,14 +13,22 @@ services:
     restart: unless-stopped
     container_name: nginx_proxy
     ports:
-      - "8080:80"  # Change port 8080 to whatever you'd like
+      - "${PORT}:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./htpasswd:/etc/nginx/htpasswd:ro
     depends_on:
       - app
     networks:
       - app_network
+    environment:
+      - NGINX_USER=${NGINX_USER}
+      - NGINX_PASSWORD=${NGINX_PASSWORD}
+    command: >
+      /bin/bash -c "
+      echo -n '${NGINX_USER}:' >> /etc/nginx/.htpasswd &&
+      openssl passwd -apr1 '${NGINX_PASSWORD}' >> /etc/nginx/.htpasswd &&
+      nginx -g 'daemon off;'
+      "
 
 networks:
   app_network:

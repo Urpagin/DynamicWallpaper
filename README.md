@@ -31,25 +31,25 @@ This is one of the reason I should add a password. On that note, adding some kin
 
 ### Requirements
 
-- htpasswd: `sudo apt-get install apache2-utils`
 - Docker & Docker compose (see the Docker website for installation)
 
 ### Steps
 
-Clone the repo to begin with: `git clone https://github.com/Urpagin/DynamicWallpaper.git`
+1. Clone the repo
+    `git clone `git clone https://github.com/Urpagin/DynamicWallpaper.git`
 
-1. For the NGINX password-protected proxy be sure to generate the `htpasswd` file with:
+2. Create file `.env` at the same level as `docker-compose.yml` and add those varaibles:
+```env
+PORT=<exposed port>
+NGINX_USER=<user for webui auth>
+NGINX_PASSWORD=<password for webui auth>
+```
 
-    `htpasswd -c htpasswd <username>`
-
-3. Start up the NGINX proxy main program:
-
-    `sudo docker compose up --build -d`
+3. Start up the containers
+   `sudo docker compose up -d --build` 
 > [!TIP]  
 > The `--build` argument rebuilds the container so that code updates will be reflected onto the container.
 
-4. Visit `127.0.0.1:<port>` (the default port is 8080 inside `docker-compose.yml`) to access the app.
-
+4. Visit `127.0.0.1:<PORT>` to access the app.
 > [!NOTE]  
 > Once you've started the app via Docker compose, the `wallpapers_server` directory will contain the wallpapers.
-
