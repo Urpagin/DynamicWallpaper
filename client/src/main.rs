@@ -19,11 +19,11 @@ struct Args {
     #[arg(short, long)]
     directory: String,
 
-    /// If you used the default NGINX proxy config specify user and password.
+    /// (optional) If you used the default NGINX proxy config specify user and password.
     #[arg(short, long)]
     user: Option<String>,
 
-    /// If you used the default NGINX proxy config specify user and password.
+    /// (optional) If you used the default NGINX proxy config specify user and password.
     #[arg(short, long)]
     password: Option<String>,
 }
@@ -40,12 +40,12 @@ async fn main() {
 
     let image_endpoint: String = format!("{endpoint}/images");
 
-    match fetch_image_links(&image_endpoint, auth).await {
+    match fetch_image_links(&image_endpoint, &auth).await {
         Ok(images) => {
             for img in &images {
                 info!("{:?}", img);
             }
-            if let Err(e) = sync_local(image_directory, images).await {
+            if let Err(e) = sync_local(image_directory, images, &auth).await {
                 error!("Failed to sync local with remote: {e}");
             }
         }
@@ -104,6 +104,7 @@ fn init_logging() {
 
 /// If the server side is password-protected by the provided NGINX proxy config file,
 /// any request to the server asks for a user and a password.
+#[derive(Clone)]
 struct Authentication {
     user: String,
     password: String,
@@ -112,7 +113,7 @@ struct Authentication {
 /// Returns a vec of `Image`s that it fetches from the image endpoint.
 async fn fetch_image_links(
     image_endpoint: &str,
-    auth: Option<Authentication>,
+    auth: &Option<Authentication>,
 ) -> Result<Vec<Image>, Box<dyn std::error::Error>> {
     debug!("Fetching images with endpoint: '{image_endpoint}'");
 
@@ -121,7 +122,7 @@ async fn fetch_image_links(
     if let Some(auth) = auth {
         response = Client::new()
             .get(image_endpoint)
-            .basic_auth(auth.user, Some(auth.password))
+            .basic_auth(auth.user.clone(), Some(auth.password.clone()))
             .send()
             .await?;
     } else {
@@ -157,7 +158,11 @@ struct Image {
 }
 
 /// Synchronizes the remote images with the local directory.
-async fn sync_local<P>(directory: P, images: Vec<Image>) -> Result<(), Box<dyn std::error::Error>>
+async fn sync_local<P>(
+    directory: P,
+    images: Vec<Image>,
+    auth: &Option<Authentication>,
+) -> Result<(), Box<dyn std::error::Error>>
 where
     P: AsRef<Path> + std::fmt::Debug,
 {
@@ -176,14 +181,30 @@ where
         .collect();
 
     // Add images
+    let mut tasks: Vec<_> = Vec::new();
+
     let mut images_filenames: HashSet<String> = HashSet::new();
     for img in images {
         images_filenames.insert(img.filename.clone());
         if !local_filenames.contains(&img.filename) {
-            let path = Path::new(directory.as_ref()).join(img.filename);
-            download_file(path, &img.download_link).await?;
+            let path = Path::new(directory.as_ref()).join(&img.filename);
+            let auth_clone = auth.clone();
+            tasks.push(tokio::spawn(async move {
+                match download_file(&path, &img.download_link, &auth_clone).await {
+                    Ok(_) => {
+                        info!("Successfully downloaded: {:?}", path);
+                    }
+                    Err(e) => {
+                        error!("Failed to download: {:?} at {}: {}", path, &img.filename, e);
+                    }
+                }
+            }))
+            //download_file(path, &img.download_link, auth).await?;
         }
     }
+
+    // Download images asynchronously (nice)
+    futures::future::join_all(tasks).await;
 
     // Remove images
     for local_filename in local_filenames {
@@ -206,11 +227,27 @@ fn ensure_directory_exists<P: AsRef<Path>>(directory: P) -> std::io::Result<()> 
 }
 
 /// Downloads a file from a URL and saves it at `path` which also contains the file name
-async fn download_file<P>(path: P, url: &str) -> Result<(), Box<dyn std::error::Error>>
+async fn download_file<P>(
+    path: P,
+    url: &str,
+    auth: &Option<Authentication>,
+) -> Result<(), Box<dyn std::error::Error>>
 where
     P: AsRef<Path> + std::fmt::Debug,
 {
-    let response = reqwest::get(url).await?;
+    let client = Client::new();
+    let mut request = client.get(url);
+
+    if let Some(auth) = auth {
+        request = request.basic_auth(&auth.user, Some(&auth.password));
+    }
+
+    let response = request.send().await?;
+
+    if !response.status().is_success() {
+        return Err(format!("Failed to download file: HTTP {}", response.status()).into());
+    }
+
     let mut file = std::fs::File::create(&path)?;
     let mut content = Cursor::new(response.bytes().await?);
     std::io::copy(&mut content, &mut file)?;
