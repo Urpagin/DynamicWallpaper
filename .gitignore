@@ -128,3 +128,4 @@ wallpapers/
 wallpapers_client/
 htpasswd
 .env
+venv/
