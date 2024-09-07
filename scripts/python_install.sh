@@ -3,6 +3,11 @@
 # If any command fails, exit the script (suupernice)
 set -e
 
+if [[ "$USER" != "root" ]]; then
+    echo 'You must run this script as root. Aborting.'
+    exit -1
+fi
+
 
 # Function to check which shell is currently in use
 detect_shell() {
@@ -88,5 +93,8 @@ fi
 
 # Source the virtual environment
 source_venv
+
+echo 'Running python install script'
+python3 install_arch_linux_systemctl.py
 
 
