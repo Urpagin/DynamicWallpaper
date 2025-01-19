@@ -1,6 +1,8 @@
 # DynamicWallpaper
 A webui/sync program to change your wallpapers.
 
+(Well, `rsync` is simpler and better! Anyway, it was fun to programming DynamicWallpaper myself.)
+
 # Explanation
 
 The server/webui part acts as the interface for any user to add/delete images.
