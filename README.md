@@ -25,7 +25,7 @@ The client/sync should be run at intervals to keep the local images in sync with
 # Security
 I am a beginner, so I cannot guarantee that there are no security vulnerabilities.
 
-This is one of the reasons I should add a password. On that note, adding a password-protected proxy (such as NGINX) would be an easier and simpler option.
+This is one of the reasons I should add a password. On that note, adding a password-protected proxy (such as NGINX) would be an easier and simpler option. (That is what happens if you decide to run the server component with the provided `docker-compose.yml`; A simple password-protected proxy using NGINX is set up.)
 
 # Installation
 
