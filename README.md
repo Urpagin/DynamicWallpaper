@@ -29,7 +29,10 @@ This is one of the reasons I should add a password. On that note, adding a passw
 
 # Installation
 
-## Server
+## Server (Docker)
+
+> [!TIP]
+> For a non-Docker installation, the user should follow the standard Rust building procedure inside of the `server` directory. <a href="https://doc.rust-lang.org/book/ch01-03-hello-cargo.html" target="_blank" rel="noopener">Click here for more information</a>.
 
 ### Requirements
 
@@ -56,3 +59,21 @@ NGINX_PASSWORD=<password for webui auth>
 4. Visit `127.0.0.1:<PORT>` to access the app.
 > [!NOTE]  
 >  Once you have started the app via Docker Compose, the `wallpapers_server` directory will contain the wallpapers.
+
+
+## Client
+
+This part is a little more hazardous. Try running the `scripts/install_arch_linux_systemctl.py` script; this program *might* work on your machine.  
+It requires **systemd** and has been tested only on **Arch Linux**.
+
+I recommend manually building the `client` component (see the tip on how to do that under the [Server (Docker) section](#server-docker)). Then, run the binary using the following argument convention:
+
+```bash
+./client \
+  --endpoint "<your endpoint, e.g., https://wallpapers.yourdomain.com>" \
+  --directory "<directory path where to store the images>" \
+  --user "<(optional) NGINX simple auth>" \
+  --password "<(optional) NGINX simple auth>"
+```
+
+For more information on how to use the `client` component on your machine, please read the small Bash script (27 lines) at `scripts/update_wallpaper_feh.sh`.
