@@ -12,7 +12,7 @@ BINARY_FILE_NAME=client_x86_64_linux
 ENDPOINT=https://domain.ext
 
 # DIRECTORY (where the images will be saved)
-WALLPAPERS_PATH=./wallpapers
+WALLPAPERS_PATH=./somewhere_changeme
 
 # NGINX
 USER=user
@@ -23,6 +23,9 @@ PASSWORD=password
 # Fetch wallpapers
 ./"$BINARY_FILE_NAME" --endpoint "$ENDPOINT" --directory "$WALLPAPERS_PATH" --user "$USER" --password "$PASSWORD"
 
+# Select random wallpaper
+wallpaper=$(find "$WALLPAPERS_PATH" -type f | shuf -n 1)
+
 # Set a random wallpaper
-feh --bg-fill --randomize "$WALLPAPERS_PATH"/*
+feh --bg-max "$wallpaper"
 

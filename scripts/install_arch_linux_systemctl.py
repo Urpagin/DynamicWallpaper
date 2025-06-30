@@ -4,17 +4,48 @@ import urllib.request
 import urllib.error
 import os
 import shlex
+import signal
+import sys
+import shutil
+
+
+INSTALL_DIR: str = 'dyn_wallpapers'
+
+def handle_sigint(signum, frame):
+    print("\nSIGINT (Ctrl+C) received. Cleaning up...")
+
+    home: Path = get_home_dir().resolve()
+    install_path: Path = Path(get_install_path(True)).resolve()
+
+    if install_path.parent != home:
+        print(f"ERROR: cannot cleanup, install_path ({install_path}) is not in home directory ({home})")
+
+    if str(install_path.name) != INSTALL_DIR:
+        print(f"ERROR: cannot cleanpu, install_path's name ({install_path}) is not {INSTALL_DIR}")
+
+    shutil.rmtree(install_path)
+    print(f"Cleaned up install dir: {install_path}")
+    sys.exit(0)
+
+
+
+signal.signal(signal.SIGINT, handle_sigint)
+
 
 
 def run_cmd(cmd: str) -> tuple[str, str]:
     """Runs a command with the OS' terminal using shlex for proper tokenization."""
-    cmd_tokens = shlex.split(cmd)  # Use shlex.split to correctly tokenize the command
+    cmd_tokens = shlex.split(cmd)
     result = subprocess.run(cmd_tokens, capture_output=True, text=True)
 
-    if result.stderr:
-        print(f"ERROR: '{cmd}' -> {result.stderr}")
+    if (rcode := result.returncode) != 0:
+        print(f"ERROR: '{cmd}' -> {result.stderr.strip()}")
+    else:
+        if result.stderr:
+            print(f"NOTE: '{cmd}' (return code {rcode}) produced stderr output -> {result.stderr.strip()}")
 
     return result.stdout, result.stderr
+
 
 
 def get_user() -> str:
@@ -27,14 +58,20 @@ def get_user() -> str:
         exit(-1)
     return user
 
+def get_home_dir() -> Path:
+    return Path(f"/home/{get_user()}").expanduser()
 
-def get_install_path() -> str:
+
+def get_install_path(do_not_create: bool = False) -> str:
     """
     Returs the install path for the program.
+    If do_not_create == True, returns the path without creating the dir.
     """
-    home_directory = str(Path(f"/home/{get_user()}").expanduser())
+    home_directory = str(get_home_dir())
     print(home_directory)
-    install_dir = f'{home_directory}/dyn_wallpapers'
+    install_dir = f'{home_directory}/{INSTALL_DIR}'
+    if do_not_create:
+        return install_dir
 
     try:
         # Try making the install_dir and install_dir/wallpapers directories.
@@ -104,6 +141,7 @@ def download_release(directory: str, url: str) -> str:
     """
     Downloads a release file from the given `url` URL and saves it into `directory`. Returns the filename.
     """
+    print("Downloading release file...")
     # Extract the filename from the URL
     filename: str = os.path.basename(url)
     full_path: str = os.path.join(directory, filename)
@@ -164,8 +202,11 @@ PASSWORD={nginx_password}
 # Fetch wallpapers
 "$BINARY_FILE_NAME" --endpoint "$ENDPOINT" --directory "$WALLPAPERS_PATH" --user "$USER" --password "$PASSWORD"
 
+# Select random wallpaper
+wallpaper=$(find "$WALLPAPERS_PATH" -type f | shuf -n 1)
+
 # Set a random wallpaper
-feh --bg-fill --randomize "$WALLPAPERS_PATH"/*
+feh --bg-max "$wallpaper"
 
 """
 
@@ -268,7 +309,7 @@ def main() -> None:
 
     # Add permissions for the user with the install directory
     print(f'Adding permissions for user \'{get_user()}\' to directory \'{install_path}\'')
-    run_cmd(f'sudo chown -R {get_user()}:{get_user()} {install_path}')
+    run_cmd(f'sudo chown -R {get_user()} {install_path}')
 
     run_script_test(script_path)
 
