@@ -63,7 +63,7 @@ This part is a little more hazardous. You can try running the `scripts/install_a
 It requires **systemd** and has been tried only on **Arch Linux**.  
 
 
-> [!INFO]  
+> [!NOTE]  
 > **The recommended method is as follows:**
 
 I recommend manually building the `client` component (see the **TIP** on how to do that under the [Server (Docker) section](#server-docker)).  
@@ -79,9 +79,6 @@ Otherwise, you can directly interact with the produced binary using this argumen
   --user "<(optional) NGINX simple auth>" \
   --password "<(optional) NGINX simple auth>"
 ```
-
-For more information on how to use the `client` component on your machine, please read the small Bash script (27 lines) at `scripts/update_wallpaper_feh.sh`.
-
 
 # Security
 I am a beginner, so I cannot guarantee that there are no security vulnerabilities.
