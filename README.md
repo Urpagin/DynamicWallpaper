@@ -22,10 +22,6 @@ The client/sync should be run at intervals to keep the local images in sync with
 - Learning opportunity.
 - Allows multiple computers and friends to share the same collection of wallpapers.
 
-# Security
-I am a beginner, so I cannot guarantee that there are no security vulnerabilities.
-
-This is one of the reasons I should add a password. On that note, adding a password-protected proxy (such as NGINX) would be an easier and simpler option. (That is what happens if you decide to run the server component with the provided `docker-compose.yml`; A simple password-protected proxy using NGINX is set up.)
 
 # Installation
 
@@ -63,17 +59,31 @@ NGINX_PASSWORD=<password for webui auth>
 
 ## Client
 
-This part is a little more hazardous. Try running the `scripts/install_arch_linux_systemctl.py` script; this program *might* work on your machine.  
-It requires **systemd** and has been tested only on **Arch Linux**.
+This part is a little more hazardous. You can try running the `scripts/install_arch_linux_systemctl.py` script; this program *might* work on your machine.  
+It requires **systemd** and has been tried only on **Arch Linux**.  
 
-I recommend manually building the `client` component (see the tip on how to do that under the [Server (Docker) section](#server-docker)). Then, run the binary using the following argument convention:
 
+> [!INFO]  
+> **The recommended method is as follows:**
+
+I recommend manually building the `client` component (see the **TIP** on how to do that under the [Server (Docker) section](#server-docker)).  
+Then copy and populate the `scripts/update_wallpaper_feh.sh` wherever you'd like and make it autostart by executing the script in
+a startup file like `~/.xinitrx`, `~/.xsession` if you're on X11 or place `exec-once = path/to/script.sh &` in `~/.config/hypr/hyprland.conf` if you're using Wayland + Hyprland.
+
+
+Otherwise, you can directly interact with the produced binary using this argument convention:
 ```bash
 ./client \
   --endpoint "<your endpoint, e.g., https://wallpapers.yourdomain.com>" \
-  --directory "<directory path where to store the images>" \
+  --directory "<directory path where to store the downloaded images>" \
   --user "<(optional) NGINX simple auth>" \
   --password "<(optional) NGINX simple auth>"
 ```
 
 For more information on how to use the `client` component on your machine, please read the small Bash script (27 lines) at `scripts/update_wallpaper_feh.sh`.
+
+
+# Security
+I am a beginner, so I cannot guarantee that there are no security vulnerabilities.
+
+This is one of the reasons I should add a password. On that note, adding a password-protected proxy (such as NGINX) would be an easier and simpler option. (That is what happens if you decide to run the server component with the provided `docker-compose.yml`; A simple password-protected proxy using NGINX is set up.)

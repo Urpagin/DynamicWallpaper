@@ -296,7 +296,13 @@ WantedBy=multi-user.target"""
     run_cmd('sudo systemctl enable update-wallpaper.service')
 
 
+def print_notice() -> None:
+    """Prints deprecation notice."""
+    notice: str = "[NOTICE] IT IS RECOMMENDED YOU MANUALLY INSTALL USING THE update_wallpaper_feh.sh SCRIPT\n\n"
+    print(notice)
+
 def main() -> None:
+    print_notice()
     SCRIPT_FILENAME: str = 'update_wallpapers.sh'
 
     if None is os.environ.get('USER') or os.environ.get('USER') != 'root':

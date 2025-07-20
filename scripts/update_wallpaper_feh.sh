@@ -5,23 +5,26 @@
 # 3. Populate the variables
 # 4. Run script (you may run it at your computer's startup)
 
-# BINARY NAME (the client-side binary's name)
-BINARY_FILE_NAME=client_x86_64_linux
+# You may call this script in your ~/.xinitrc or ~/.xsession
+# or in your ~/.config/hypr/hyprland.conf if you use Hyprland: exec-once = this-script &
+
+# BINARY PATH (the client-side binary's path)
+BINARY_FILE_NAME='./client_x86_64_linux'
 
 # SERVER URL
-ENDPOINT=https://domain.ext
+ENDPOINT='https://yourdomain.ext'
 
 # DIRECTORY (where the images will be saved)
-WALLPAPERS_PATH=./somewhere_changeme
+WALLPAPERS_PATH='./somewhere/change/me'
 
 # NGINX
-USER=user
-PASSWORD=password
+USER='user'
+PASSWORD='password'
 
 
-
+# Remove --user and --password if you don't have NGINX simple auth
 # Fetch wallpapers
-./"$BINARY_FILE_NAME" --endpoint "$ENDPOINT" --directory "$WALLPAPERS_PATH" --user "$USER" --password "$PASSWORD"
+./"$BINARY_FILE_NAME" --endpoint "$ENDPOINT" --directory "$WALLPAPERS_PATH" --user "$USER" --password "$PASSWORD" &
 
 # Select random wallpaper
 wallpaper=$(find "$WALLPAPERS_PATH" -type f | shuf -n 1)
